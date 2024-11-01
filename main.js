@@ -11,7 +11,7 @@ const info = document.getElementById("info");
 const crown = document.getElementById("crown");
 const clown = document.getElementById("clown");
 
-const fps = 60;
+const fps = 120;
 let CANVAS_WIDTH = 600;
 let CANVAS_HEIGHT = 600;
 let CHAR_POS_Y = 471;
@@ -40,6 +40,9 @@ let gameOver = false;
 let isMobile = false;
 let buttonPosX = 0;
 let buttonPosY = 0;
+let buttonFullScreenPosX = (CANVAS_WIDTH / 2) - 25;
+let buttonFullScreenPosY = 5;
+let fullscreen = false;
 
 let computer = {
   images: [
@@ -101,7 +104,7 @@ function gameLoop() {
   drawBackground();
   if (gameOver) {
     drawEnding();
-    document.getElementById("info").innerHTML = `mouseX: <b>${mouseX}<b> mouseY: <b>${mouseY}<b>`;
+    // document.getElementById("info").innerHTML = `mouseX: <b>${mouseX}<b> mouseY: <b>${mouseY}<b>`;
     return;
   }
 
@@ -115,14 +118,13 @@ function gameLoop() {
   if (textInfo != null)
     drawResult(textInfo);
 
-  document.getElementById("info").innerHTML = `mouseX: <b>${mouseX}<b> mouseY: <b>${mouseY}<b>`;
+  // document.getElementById("info").innerHTML = `mouseX: <b>${mouseX}<b> mouseY: <b>${mouseY}<b>`;
   // console.log('animationSpeed', animationSpeed)
 }
 
 function drawHUD() {
-  let lostMarginLeft = lost >= 1000 ? 145 : 120;
-  drawText(`Win: ${win}`, 15, 30, 30, GAME_FONT_COLOR, 500);
-  drawText(`Lost: ${lost}`, CANVAS_WIDTH - lostMarginLeft, 30, 30, GAME_FONT_COLOR, 500);
+  drawText(`You: ${win}`, 15, 30, 30, GAME_FONT_COLOR);
+  drawText(`Comp: ${lost}`, CANVAS_WIDTH - 120, 30, 30, GAME_FONT_COLOR);
 }
 
 function drawResult(text) {
@@ -206,21 +208,49 @@ function clickHandler(event) {
   var y = event.clientY - rect.top;
   console.log(`clicked at: x=${x}; y=${y}`);
 
-  if ((x >= PAPER_POS_X && x <= (PAPER_POS_X + CHAR_SIZE)) && (y >= PAPER_POS_Y && y <= (CHAR_POS_Y + CHAR_SIZE))) {
-    SetCharSelected(paper, 0, PAPER_POS_X, PAPER_POS_Y)
+  if (charSelected.img == null) {
+    if ((x >= PAPER_POS_X && x <= (PAPER_POS_X + CHAR_SIZE)) && (y >= PAPER_POS_Y && y <= (CHAR_POS_Y + CHAR_SIZE))) {
+      SetCharSelected(paper, 0, PAPER_POS_X, PAPER_POS_Y)
+    }
+    else if ((x >= SCISSOR_POS_X && x <= (SCISSOR_POS_X + CHAR_SIZE)) && (y >= SCISSOR_POS_Y && y <= (CHAR_POS_Y + CHAR_SIZE))) {
+      SetCharSelected(scissor, 1, SCISSOR_POS_X, SCISSOR_POS_Y)
+    }
+    else if ((x >= ROCK_POS_X && x <= (ROCK_POS_X + CHAR_SIZE)) && (y >= ROCK_POS_Y && y <= (CHAR_POS_Y + CHAR_SIZE))) {
+      SetCharSelected(rock, 2, ROCK_POS_X, ROCK_POS_Y)
+    }
   }
-  else if ((x >= SCISSOR_POS_X && x <= (SCISSOR_POS_X + CHAR_SIZE)) && (y >= SCISSOR_POS_Y && y <= (CHAR_POS_Y + CHAR_SIZE))) {
-    SetCharSelected(scissor, 1, SCISSOR_POS_X, SCISSOR_POS_Y)
-  }
-  else if ((x >= ROCK_POS_X && x <= (ROCK_POS_X + CHAR_SIZE)) && (y >= ROCK_POS_Y && y <= (CHAR_POS_Y + CHAR_SIZE))) {
-    SetCharSelected(rock, 2, ROCK_POS_X, ROCK_POS_Y)
-  }
-
-  if (((x >= buttonPosX && x <= buttonPosX + 202) && (y >= buttonPosY && y <= buttonPosY + 102)) && gameOver){
+  if (((x >= buttonPosX && x <= buttonPosX + 202) && (y >= buttonPosY && y <= buttonPosY + 102)) && gameOver) {
     gameOver = false;
     win = lost = 0;
     reset();
-    console.log('clicked')
+  }
+
+  //fullscreen area whole width at 1 to 50 top pixel
+  if (((x >= 1 && x <= CANVAS_WIDTH) && (y >= 1 && y <= 50))) {
+    const element = document.documentElement;
+    if (!fullscreen) {
+      if (element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if (element.mozRequestFullScreen) { // Firefox
+        element.mozRequestFullScreen();
+      } else if (element.webkitRequestFullscreen) { // Chrome, Safari e Opera
+        element.webkitRequestFullscreen();
+      } else if (element.msRequestFullscreen) { // Internet Explorer / Edge
+        element.msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+    fullscreen = !fullscreen;
+    setTimeout(() => initConfig(), 50);
   }
 }
 
@@ -280,19 +310,19 @@ function drawEnding() {
   const midScreen = CANVAS_WIDTH / 2;
   const midScreenY = CANVAS_HEIGHT / 2;
   buttonPosX = midScreen - 100;
-  
+
   if (win > lost) {
     buttonPosY = isMobile ? midScreenY + 50 : midScreenY + 30;
     drawEndingButton(buttonPosX, buttonPosY, midScreen);
-    
+
     let crownPosY = isMobile ? midScreenY - 170 : midScreenY - 170;
     canvasContext.drawImage(crown, midScreen - 50, crownPosY, 100, 100);
-    
-    let textPosX = isMobile ? 60 : midScreen - (midScreen / 2) + 10;
+
+    let textPosX = isMobile ? 30 : midScreen - (midScreen / 2) + 10;
     let textPosY = midScreenY - 40;
     drawText("Congratulations!", textPosX, textPosY, 40, GAME_FONT_COLOR, 500);
-    
-    textPosX = isMobile ? 80 : midScreen - (midScreen / 3) - 10;
+
+    textPosX = isMobile ? 60 : midScreen - (midScreen / 3) - 10;
     textPosY = midScreenY;
     drawText("You won the hardest battle!", textPosX, textPosY, 20, GAME_FONT_COLOR, 500);
     return;
@@ -300,15 +330,15 @@ function drawEnding() {
 
   let clownPosY = isMobile ? midScreenY - 280 : midScreenY - 200;
   canvasContext.drawImage(clown, midScreen - 70, clownPosY, 146, 200);
-  
+
   textPosX = isMobile ? midScreen - (midScreen / 2) : midScreen - (midScreen / 3);
   let textPosY = isMobile ? midScreenY - 30 : midScreenY + 60;
   drawText("So sad!", textPosX, textPosY, 60, GAME_FONT_COLOR, 500);
-  
-  textPosX = isMobile ? 50 : midScreen - (midScreen / 2);
+
+  textPosX = isMobile ? 35 : midScreen - (midScreen / 2);
   textPosY = isMobile ? midScreenY + 10 : midScreen + CHAR_SIZE + 22;
   drawText("I Wish you better lucky next time!", textPosX, textPosY, 20, GAME_FONT_COLOR, 500);
-  
+
   buttonPosY = isMobile ? midScreenY + 50 : midScreenY + 130;
   drawEndingButton(buttonPosX, buttonPosY, midScreen);
 }
@@ -317,9 +347,9 @@ function drawEndingButton(buttonPosX, buttonPosY, midScreen) {
   drawRect(buttonPosX, buttonPosY, 202, 102, 3, '#222061', false);
   drawRect(buttonPosX, buttonPosY, 200, 100, 2, '#4B5498');
 
-  let textPosX = isMobile ? midScreen - (midScreen / 2) : midScreen - (midScreen / 3);
-  drawText("Play Again", textPosX + 5, buttonPosY + 64, 40, GAME_FONT_COLOR, 200);
-  
+  let textPosX = isMobile ? midScreen - (midScreen / 2) - 2 : midScreen - (midScreen / 3);
+  drawText("Play Again", textPosX, buttonPosY + 64, 40, GAME_FONT_COLOR, 200);
+
   if ((mouseX >= buttonPosX && mouseX <= buttonPosX + 202) && (mouseY >= buttonPosY && mouseY <= buttonPosY + 102))
     drawRect(buttonPosX, buttonPosY, 202, 102, 2, GAME_FONT_COLOR, false);
 }
@@ -342,7 +372,7 @@ function drawRect(x, y, width, height, lineWidth, color, filled = true) {
 function drawText(text, x, y, fontSize, color, maxwidth) {
   canvasContext.fillStyle = color;
   canvasContext.font = `${fontSize}px arial`;
-  canvasContext.fillText(text, x, y, maxwidth);
+  canvasContext.fillText(text, x, y);
 }
 
 function reset() {
@@ -396,10 +426,11 @@ function initConfig() {
   const charMidScreen = isMobile ? (width / 2) - (CHAR_SIZE / 2) : 260;
   computer.posX = charMidScreen;
   computer.finalPosY = isMobile ? (height / 3) - (CHAR_SIZE - 20) : 125;
+  buttonFullScreenPosX = (CANVAS_WIDTH / 2) - 25;
 
   charSelected.finalPosX = charMidScreen;
   charSelected.finalPosY = isMobile ? ((height / 2) + (CHAR_SIZE - 20)) : 308;
-  
+
   CHAR_POS_Y = isMobile ? (height - (CHAR_SIZE * 1.5)) : 471;
   PAPER_POS_Y = SCISSOR_POS_Y = ROCK_POS_Y = CHAR_POS_Y;
 
